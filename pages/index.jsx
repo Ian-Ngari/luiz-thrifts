@@ -100,7 +100,7 @@ export default function Home() {
         <meta property="og:title" content="Luiz Mitumba Thrifts" />
         <meta property="og:description" content="Premium thrift fashion in Nairobi." />
         <meta name="theme-color" content="#F5E8E4" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.ico?v=2" />
       </Head>
 
       <div className="min-h-screen max-w-lg mx-auto bg-white relative">

@@ -25,17 +25,18 @@ export default function AdminPanel({
   onProductDeleted,
   onProductUpdated,
 }) {
-  const [tab,       setTab]       = useState("add");
-  const [form,      setForm]      = useState(EMPTY_FORM);
-  const [frontFile, setFrontFile] = useState(null);
-  const [backFile,  setBackFile]  = useState(null);
-  const [frontPrev, setFrontPrev] = useState(null);
-  const [backPrev,  setBackPrev]  = useState(null);
-  const [loading,   setLoading]   = useState(false);
-  const [password,  setPassword]  = useState("");
-  const [authed,    setAuthed]    = useState(false);
-  const [authErr,   setAuthErr]   = useState("");
-  const [msg,       setMsg]       = useState(null);
+  const [tab,         setTab]         = useState("add");
+  const [form,        setForm]        = useState(EMPTY_FORM);
+  const [frontFile,   setFrontFile]   = useState(null);
+  const [backFile,    setBackFile]    = useState(null);
+  const [frontPrev,   setFrontPrev]   = useState(null);
+  const [backPrev,    setBackPrev]    = useState(null);
+  const [loading,     setLoading]     = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [password,    setPassword]    = useState("");
+  const [authed,      setAuthed]      = useState(false);
+  const [authErr,     setAuthErr]     = useState("");
+  const [msg,         setMsg]         = useState(null);
 
   const frontRef = useRef();
   const backRef  = useRef();
@@ -51,7 +52,7 @@ export default function AdminPanel({
             type="password"
             placeholder="Password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => { setPassword(e.target.value); setAuthErr(""); }}
             onKeyDown={(e) => e.key === "Enter" && tryAuth()}
             className="w-full border border-[#E0C0B8] rounded-lg px-3 py-2.5 text-[14px] outline-none focus:border-[#C4877D] mb-3"
           />
@@ -65,9 +66,10 @@ export default function AdminPanel({
             </button>
             <button
               onClick={tryAuth}
-              className="flex-1 py-2.5 bg-[#1C1412] text-white rounded-lg text-[13px] font-medium"
+              disabled={authLoading}
+              className="flex-1 py-2.5 bg-[#1C1412] text-white rounded-lg text-[13px] font-medium disabled:opacity-50"
             >
-              Enter
+              {authLoading ? "Checking…" : "Enter"}
             </button>
           </div>
         </div>
@@ -75,16 +77,38 @@ export default function AdminPanel({
     );
   }
 
-  // ── Helper functions ───────────────────────────────────
-  function tryAuth() {
-    if (password.trim().length < 3) {
+  // ── Auth (SECURE - backend check) ──────────────────────
+  async function tryAuth() {
+    if (!password.trim()) {
       setAuthErr("Please enter a password.");
       return;
     }
-    setAuthed(true);
+
+    setAuthLoading(true);
     setAuthErr("");
+
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "x-admin-password": password },
+      });
+
+      if (res.status === 401) {
+        setAuthErr("Incorrect password. Try again.");
+        setPassword("");
+      } else if (res.ok) {
+        setAuthed(true);
+      } else {
+        setAuthErr("Something went wrong. Try again.");
+      }
+    } catch {
+      setAuthErr("Connection error. Please try again.");
+    } finally {
+      setAuthLoading(false);
+    }
   }
 
+  // ── Helpers ────────────────────────────────────────────
   function pickFile(which, file) {
     if (!file) return;
     const url = URL.createObjectURL(file);
@@ -136,19 +160,20 @@ export default function AdminPanel({
           "x-admin-password": password,
         },
         body: JSON.stringify({
-          cat:             form.cat,
-          front_url:       front.url,
-          back_url:        back.url,
+          cat: form.cat,
+          front_url: front.url,
+          back_url: back.url,
           front_public_id: front.public_id,
-          back_public_id:  back.public_id,
-          left_price:      parseInt(form.leftPrice),
-          left_sizes:      form.leftSizes,
-          right_price:     parseInt(form.rightPrice),
-          right_sizes:     form.rightSizes,
-          left_sold_out:   false,
-          right_sold_out:  false,
+          back_public_id: back.public_id,
+          left_price: parseInt(form.leftPrice),
+          left_sizes: form.leftSizes,
+          right_price: parseInt(form.rightPrice),
+          right_sizes: form.rightSizes,
+          left_sold_out: false,
+          right_sold_out: false,
         }),
       });
+
       if (!prodRes.ok) throw new Error("Failed to save product.");
       const newProd = await prodRes.json();
 
