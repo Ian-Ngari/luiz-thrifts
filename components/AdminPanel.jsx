@@ -176,63 +176,102 @@ export default function AdminPanel({
   }
 
   // ── Add listing ────────────────────────────────────────
-  async function handleSubmit() {
-    if (!frontFile || !backFile)
-      return flash("Please upload both front and back photos.", "error");
-    if (!form.leftPrice || !form.rightPrice)
-      return flash("Please enter prices for both outfits.", "error");
-    if (!form.leftSizes.length || !form.rightSizes.length)
-      return flash("Please select sizes for both outfits.", "error");
+ async function handleSubmit() {
+  if (!frontFile || !backFile)
+    return flash("Please upload both front and back photos.", "error");
+  if (!form.leftPrice || !form.rightPrice)
+    return flash("Please enter prices for both outfits.", "error");
+  if (!form.leftSizes.length || !form.rightSizes.length)
+    return flash("Please select sizes for both outfits.", "error");
 
-    setLoading(true);
-    try {
+  setLoading(true);
+  try {
+    // Step 1: get a signed upload credential from your API
+    const sigRes = await fetch("/api/upload", {
+      method: "POST",
+      headers: { "x-admin-password": password },
+    });
+    if (!sigRes.ok) throw new Error("Could not get upload credentials.");
+    const { signature, timestamp, folder, cloud_name, api_key } = await sigRes.json();
+
+    // Step 2: upload both images directly to Cloudinary from the browser
+    async function uploadDirect(file) {
+      // Compress client-side first using createImageBitmap + canvas
+      const compressed = await clientCompress(file);
+
       const fd = new FormData();
-      fd.append("front", frontFile);
-      fd.append("back",  backFile);
+      fd.append("file",      compressed);
+      fd.append("api_key",   api_key);
+      fd.append("timestamp", timestamp);
+      fd.append("signature", signature);
+      fd.append("folder",    folder);
 
-      const upRes = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "x-admin-password": password },
-        body: fd,
-      });
-      if (!upRes.ok) throw new Error("Image upload failed.");
-      const { front, back } = await upRes.json();
-
-      const prodRes = await fetch("/api/products", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-password": password,
-        },
-        body: JSON.stringify({
-          cat:             form.cat,
-          front_url:       front.url,
-          back_url:        back.url,
-          front_public_id: front.public_id,
-          back_public_id:  back.public_id,
-          left_price:      parseInt(form.leftPrice),
-          left_sizes:      form.leftSizes,
-          right_price:     parseInt(form.rightPrice),
-          right_sizes:     form.rightSizes,
-          left_sold_out:   false,
-          right_sold_out:  false,
-        }),
-      });
-      if (!prodRes.ok) throw new Error("Failed to save product.");
-      const newProd = await prodRes.json();
-
-      onProductAdded(newProd);
-      setForm(EMPTY_FORM);
-      setFrontFile(null); setFrontPrev(null);
-      setBackFile(null);  setBackPrev(null);
-      flash("Listing added to the store! ✓", "ok");
-      setTab("manage");
-    } catch (e) {
-      flash(e.message, "error");
-    } finally {
-      setLoading(false);
+      const r = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`,
+        { method: "POST", body: fd }
+      );
+      if (!r.ok) throw new Error("Cloudinary upload failed.");
+      const d = await r.json();
+      return { url: d.secure_url, public_id: d.public_id };
     }
+
+    const [front, back] = await Promise.all([
+      uploadDirect(frontFile),
+      uploadDirect(backFile),
+    ]);
+
+    // Step 3: save product metadata to Supabase via your existing products API
+    const prodRes = await fetch("/api/products", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": password,
+      },
+      body: JSON.stringify({
+        cat:             form.cat,
+        front_url:       front.url,
+        back_url:        back.url,
+        front_public_id: front.public_id,
+        back_public_id:  back.public_id,
+        left_price:      parseInt(form.leftPrice),
+        left_sizes:      form.leftSizes,
+        right_price:     parseInt(form.rightPrice),
+        right_sizes:     form.rightSizes,
+        left_sold_out:   false,
+        right_sold_out:  false,
+      }),
+    });
+    if (!prodRes.ok) throw new Error("Failed to save product.");
+    const newProd = await prodRes.json();
+
+    onProductAdded(newProd);
+    setForm(EMPTY_FORM);
+    setFrontFile(null); setFrontPrev(null);
+    setBackFile(null);  setBackPrev(null);
+    flash("Listing added to the store! ✓", "ok");
+    setTab("manage");
+  } catch (e) {
+    flash(e.message, "error");
+  } finally {
+    setLoading(false);
   }
+}
+
+// Compress image in-browser before uploading (no server needed)
+async function clientCompress(file, maxPx = 2000, quality = 0.88) {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width  = Math.round(img.width  * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(resolve, "image/jpeg", quality);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
 
   // ── Delete ─────────────────────────────────────────────
   async function handleDelete(id) {
