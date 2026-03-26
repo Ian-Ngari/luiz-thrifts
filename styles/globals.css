@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --rose:        #C4877D;
+  --blush:       #F5E8E4;
+  --blush-mid:   #EDD3CC;
+  --border-rose: #E0C0B8;
+  --dark:        #1C1412;
+  --mid:         #7A5F5A;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: #fdfaf9;
+  color: var(--dark);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar        { width: 4px; height: 4px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--border-rose); border-radius: 4px; }
+
+/* ── Loading skeleton shimmer ───────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0;  }
+}
+.skeleton {
+  background: linear-gradient(90deg, #f0e8e5 25%, #e8dbd8 50%, #f0e8e5 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+/* ── Staggered card reveal ──────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.card-enter {
+  animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* ── Modal slide-up ─────────────────────────────────── */
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.modal-slide {
+  animation: slideUp 0.4s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* ── Overlay fade ───────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.overlay-fade { animation: fadeIn 0.25s ease both; }
+
+/* ── Image crossfade ────────────────────────────────── */
+.img-fade {
+  transition: opacity 0.22s ease;
+}
