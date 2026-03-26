@@ -37,6 +37,9 @@ export default function AdminPanel({
   const [authed,      setAuthed]      = useState(false);
   const [authErr,     setAuthErr]     = useState("");
   const [msg,         setMsg]         = useState(null);
+  const [editingId,   setEditingId]   = useState(null);
+  const [editForm,    setEditForm]    = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
 
   const frontRef = useRef();
   const backRef  = useRef();
@@ -58,17 +61,10 @@ export default function AdminPanel({
           />
           {authErr && <p className="text-[12px] text-red-500 mb-3">{authErr}</p>}
           <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="flex-1 py-2.5 border border-[#E0C0B8] rounded-lg text-[13px] text-[#7A5F5A]"
-            >
+            <button onClick={onClose} className="flex-1 py-2.5 border border-[#E0C0B8] rounded-lg text-[13px] text-[#7A5F5A]">
               Cancel
             </button>
-            <button
-              onClick={tryAuth}
-              disabled={authLoading}
-              className="flex-1 py-2.5 bg-[#1C1412] text-white rounded-lg text-[13px] font-medium disabled:opacity-50"
-            >
+            <button onClick={tryAuth} disabled={authLoading} className="flex-1 py-2.5 bg-[#1C1412] text-white rounded-lg text-[13px] font-medium disabled:opacity-50">
               {authLoading ? "Checking…" : "Enter"}
             </button>
           </div>
@@ -77,30 +73,19 @@ export default function AdminPanel({
     );
   }
 
-  // ── Auth (SECURE - backend check) ──────────────────────
+  // ── Auth ───────────────────────────────────────────────
   async function tryAuth() {
-    if (!password.trim()) {
-      setAuthErr("Please enter a password.");
-      return;
-    }
-
+    if (!password.trim()) { setAuthErr("Please enter a password."); return; }
     setAuthLoading(true);
     setAuthErr("");
-
     try {
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "x-admin-password": password },
       });
-
-      if (res.status === 401) {
-        setAuthErr("Incorrect password. Try again.");
-        setPassword("");
-      } else if (res.ok) {
-        setAuthed(true);
-      } else {
-        setAuthErr("Something went wrong. Try again.");
-      }
+      if (res.status === 401) { setAuthErr("Incorrect password. Try again."); setPassword(""); }
+      else if (res.ok) setAuthed(true);
+      else setAuthErr("Something went wrong. Try again.");
     } catch {
       setAuthErr("Connection error. Please try again.");
     } finally {
@@ -125,9 +110,69 @@ export default function AdminPanel({
     }));
   }
 
+  function toggleEditSize(side, s) {
+    const key   = side === "L" ? "leftSizes" : "rightSizes";
+    const sizes = editForm[key];
+    setEditForm((f) => ({
+      ...f,
+      [key]: sizes.includes(s) ? sizes.filter((x) => x !== s) : [...sizes, s],
+    }));
+  }
+
   function flash(text, type) {
     setMsg({ text, type });
     setTimeout(() => setMsg(null), 3500);
+  }
+
+  function startEdit(p) {
+    setEditingId(p.id);
+    setEditForm({
+      cat:        p.cat,
+      leftPrice:  String(p.left_price),
+      leftSizes:  [...p.left_sizes],
+      rightPrice: String(p.right_price),
+      rightSizes: [...p.right_sizes],
+    });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditForm(null);
+  }
+
+  // ── Save edit ──────────────────────────────────────────
+  async function handleSaveEdit(id) {
+    if (!editForm.leftPrice || !editForm.rightPrice)
+      return flash("Please enter prices for both outfits.", "error");
+    if (!editForm.leftSizes.length || !editForm.rightSizes.length)
+      return flash("Please select at least one size for each outfit.", "error");
+
+    setEditLoading(true);
+    try {
+      const res = await fetch("/api/products/" + id, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": password,
+        },
+        body: JSON.stringify({
+          cat:         editForm.cat,
+          left_price:  parseInt(editForm.leftPrice),
+          left_sizes:  editForm.leftSizes,
+          right_price: parseInt(editForm.rightPrice),
+          right_sizes: editForm.rightSizes,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save changes.");
+      const updated = await res.json();
+      onProductUpdated(updated);
+      cancelEdit();
+      flash("Changes saved! ✓", "ok");
+    } catch (e) {
+      flash(e.message, "error");
+    } finally {
+      setEditLoading(false);
+    }
   }
 
   // ── Add listing ────────────────────────────────────────
@@ -160,20 +205,19 @@ export default function AdminPanel({
           "x-admin-password": password,
         },
         body: JSON.stringify({
-          cat: form.cat,
-          front_url: front.url,
-          back_url: back.url,
+          cat:             form.cat,
+          front_url:       front.url,
+          back_url:        back.url,
           front_public_id: front.public_id,
-          back_public_id: back.public_id,
-          left_price: parseInt(form.leftPrice),
-          left_sizes: form.leftSizes,
-          right_price: parseInt(form.rightPrice),
-          right_sizes: form.rightSizes,
-          left_sold_out: false,
-          right_sold_out: false,
+          back_public_id:  back.public_id,
+          left_price:      parseInt(form.leftPrice),
+          left_sizes:      form.leftSizes,
+          right_price:     parseInt(form.rightPrice),
+          right_sizes:     form.rightSizes,
+          left_sold_out:   false,
+          right_sold_out:  false,
         }),
       });
-
       if (!prodRes.ok) throw new Error("Failed to save product.");
       const newProd = await prodRes.json();
 
@@ -190,10 +234,10 @@ export default function AdminPanel({
     }
   }
 
-  // ── Delete listing ─────────────────────────────────────
+  // ── Delete ─────────────────────────────────────────────
   async function handleDelete(id) {
     if (!confirm("Remove this listing? This cannot be undone.")) return;
-    const res = await fetch(`/api/products/${id}`, {
+    const res = await fetch("/api/products/" + id, {
       method: "DELETE",
       headers: { "x-admin-password": password },
     });
@@ -203,7 +247,7 @@ export default function AdminPanel({
 
   // ── Toggle sold out ────────────────────────────────────
   async function handleToggleSoldOut(id, field, value) {
-    const res = await fetch(`/api/products/${id}`, {
+    const res = await fetch("/api/products/" + id, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -214,7 +258,7 @@ export default function AdminPanel({
     if (res.ok) {
       const updated = await res.json();
       onProductUpdated(updated);
-      flash(`Marked as ${value ? "sold out" : "available"}.`, "ok");
+      flash("Marked as " + (value ? "sold out" : "available") + ".", "ok");
     } else {
       flash("Update failed.", "error");
     }
@@ -227,38 +271,33 @@ export default function AdminPanel({
       {/* Header */}
       <div className="sticky top-0 bg-[#1C1412] text-white px-4 h-14 flex items-center justify-between z-10">
         <p className="font-medium text-[14px]">Admin Panel</p>
-        <button
-          onClick={onClose}
-          className="text-[12px] border border-white/30 rounded-lg px-3 py-1.5 hover:bg-white/10 transition-colors"
-        >
+        <button onClick={onClose} className="text-[12px] border border-white/30 rounded-lg px-3 py-1.5 hover:bg-white/10 transition-colors">
           Close ✕
         </button>
       </div>
 
       {/* Tabs */}
       <div className="flex border-b border-[#E0C0B8]">
-        {[["add", "Add listing"], ["manage", `Manage (${products.length})`]].map(([key, label]) => (
+        {[["add", "Add listing"], ["manage", "Manage (" + products.length + ")"]].map(([key, label]) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`flex-1 py-3 text-[13px] font-medium transition-colors ${
-              tab === key
-                ? "border-b-2 border-[#C4877D] text-[#1C1412]"
-                : "text-[#7A5F5A] hover:text-[#1C1412]"
-            }`}
+            className={"flex-1 py-3 text-[13px] font-medium transition-colors " + (
+              tab === key ? "border-b-2 border-[#C4877D] text-[#1C1412]" : "text-[#7A5F5A] hover:text-[#1C1412]"
+            )}
           >
             {label}
           </button>
         ))}
       </div>
 
-      {/* Flash message */}
+      {/* Flash */}
       {msg && (
-        <div className={`mx-4 mt-4 px-4 py-3 rounded-lg text-[13px] font-medium ${
+        <div className={"mx-4 mt-4 px-4 py-3 rounded-lg text-[13px] font-medium " + (
           msg.type === "ok"
             ? "bg-green-50 text-green-700 border border-green-200"
             : "bg-red-50 text-red-700 border border-red-200"
-        }`}>
+        )}>
           {msg.text}
         </div>
       )}
@@ -266,8 +305,6 @@ export default function AdminPanel({
       {/* ── ADD TAB ─────────────────────────────────────── */}
       {tab === "add" && (
         <div className="p-4 space-y-5 pb-10">
-
-          {/* Photo uploads */}
           <div>
             <p className="text-[11px] font-medium uppercase tracking-widest text-[#7A5F5A] mb-2">
               Photos (both mannequins in each shot)
@@ -278,13 +315,8 @@ export default function AdminPanel({
                 { label: "Back photo",  which: "back",  prev: backPrev,  ref: backRef  },
               ].map(({ label, which, prev, ref }) => (
                 <div key={which}>
-                  <input
-                    ref={ref}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => pickFile(which, e.target.files[0])}
-                  />
+                  <input ref={ref} type="file" accept="image/*" className="hidden"
+                    onChange={(e) => pickFile(which, e.target.files[0])} />
                   <button
                     onClick={() => ref.current?.click()}
                     className="w-full aspect-[3/4] rounded-xl border-[1.5px] border-dashed border-[#E0C0B8] bg-[#F5E8E4] flex flex-col items-center justify-center overflow-hidden relative hover:border-[#C4877D] transition-colors active:scale-[0.98]"
@@ -315,23 +347,17 @@ export default function AdminPanel({
             </div>
           </div>
 
-          {/* Category */}
           <div>
-            <label className="text-[11px] font-medium uppercase tracking-widest text-[#7A5F5A] mb-2 block">
-              Category
-            </label>
+            <label className="text-[11px] font-medium uppercase tracking-widest text-[#7A5F5A] mb-2 block">Category</label>
             <select
               value={form.cat}
               onChange={(e) => setForm((f) => ({ ...f, cat: e.target.value }))}
               className="w-full border border-[#E0C0B8] rounded-lg px-3 py-2.5 text-[14px] outline-none focus:border-[#C4877D] bg-white"
             >
-              {CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>{c.label}</option>
-              ))}
+              {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
             </select>
           </div>
 
-          {/* Left + Right outfit details */}
           {[
             { side: "L", label: "Left outfit",  priceKey: "leftPrice",  sizesKey: "leftSizes",  color: "#C4877D" },
             { side: "R", label: "Right outfit", priceKey: "rightPrice", sizesKey: "rightSizes", color: "#7BA3C9" },
@@ -341,9 +367,7 @@ export default function AdminPanel({
                 <div className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
                 <p className="text-[13px] font-medium text-[#1C1412]">{label}</p>
               </div>
-              <label className="text-[11px] text-[#7A5F5A] uppercase tracking-wider mb-1 block">
-                Price (KES)
-              </label>
+              <label className="text-[11px] text-[#7A5F5A] uppercase tracking-wider mb-1 block">Price (KES)</label>
               <input
                 type="number"
                 placeholder="e.g. 850"
@@ -351,22 +375,15 @@ export default function AdminPanel({
                 onChange={(e) => setForm((f) => ({ ...f, [priceKey]: e.target.value }))}
                 className="w-full border border-[#E0C0B8] rounded-lg px-3 py-2 text-[14px] outline-none focus:border-[#C4877D] bg-white mb-3"
               />
-              <label className="text-[11px] text-[#7A5F5A] uppercase tracking-wider mb-2 block">
-                Available sizes
-              </label>
+              <label className="text-[11px] text-[#7A5F5A] uppercase tracking-wider mb-2 block">Available sizes</label>
               <div className="flex gap-2 flex-wrap">
                 {SIZES.map((s) => {
                   const on = form[sizesKey].includes(s);
                   return (
-                    <button
-                      key={s}
-                      onClick={() => toggleSize(side, s)}
-                      className={`px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-all duration-200 ${
-                        on
-                          ? "bg-[#1C1412] text-white border-[#1C1412]"
-                          : "border-[#E0C0B8] bg-white text-[#7A5F5A] hover:border-[#C4877D]"
-                      }`}
-                    >
+                    <button key={s} onClick={() => toggleSize(side, s)}
+                      className={"px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-all duration-200 " + (
+                        on ? "bg-[#1C1412] text-white border-[#1C1412]" : "border-[#E0C0B8] bg-white text-[#7A5F5A] hover:border-[#C4877D]"
+                      )}>
                       {s}
                     </button>
                   );
@@ -375,12 +392,8 @@ export default function AdminPanel({
             </div>
           ))}
 
-          {/* Submit */}
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full py-3.5 bg-[#1C1412] text-white rounded-xl text-[14px] font-medium disabled:opacity-50 hover:opacity-85 active:scale-[0.98] transition-all duration-200"
-          >
+          <button onClick={handleSubmit} disabled={loading}
+            className="w-full py-3.5 bg-[#1C1412] text-white rounded-xl text-[14px] font-medium disabled:opacity-50 hover:opacity-85 active:scale-[0.98] transition-all duration-200">
             {loading ? "Uploading & saving…" : "Add to store"}
           </button>
         </div>
@@ -390,16 +403,12 @@ export default function AdminPanel({
       {tab === "manage" && (
         <div className="p-4 pb-10">
           {products.length === 0 ? (
-            <div className="text-center py-16 text-[#7A5F5A] text-[13px]">
-              No listings yet. Add your first one!
-            </div>
+            <div className="text-center py-16 text-[#7A5F5A] text-[13px]">No listings yet. Add your first one!</div>
           ) : (
             <div className="space-y-3">
               {products.map((p) => (
-                <div
-                  key={p.id}
-                  className="border border-[#E0C0B8] rounded-xl bg-white overflow-hidden"
-                >
+                <div key={p.id} className="border border-[#E0C0B8] rounded-xl bg-white overflow-hidden">
+
                   {/* Product row */}
                   <div className="flex gap-3 items-center p-3">
                     <div className="relative w-14 h-[74px] rounded-lg overflow-hidden flex-shrink-0 bg-[#F5E8E4]">
@@ -408,19 +417,93 @@ export default function AdminPanel({
                     <div className="flex-1 min-w-0">
                       <p className="text-[10px] uppercase tracking-wider text-[#7A5F5A]">{p.cat}</p>
                       <p className="text-[13px] font-medium text-[#1C1412] mt-0.5">
-                        L: KES {p.left_price.toLocaleString()} · R: KES {p.right_price.toLocaleString()}
+                        {"L: KES " + p.left_price.toLocaleString() + " · R: KES " + p.right_price.toLocaleString()}
                       </p>
                       <p className="text-[10px] text-[#7A5F5A] mt-0.5 truncate">
-                        L: {p.left_sizes.join(", ")} | R: {p.right_sizes.join(", ")}
+                        {"L: " + p.left_sizes.join(", ") + " | R: " + p.right_sizes.join(", ")}
                       </p>
                     </div>
-                    <button
-                      onClick={() => handleDelete(p.id)}
-                      className="text-[11px] px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex-shrink-0"
-                    >
-                      Remove
-                    </button>
+                    {/* Edit + Remove buttons */}
+                    <div className="flex flex-col gap-1.5 flex-shrink-0">
+                      <button
+                        onClick={() => editingId === p.id ? cancelEdit() : startEdit(p)}
+                        className={"text-[11px] px-3 py-1.5 rounded-lg border transition-colors " + (
+                          editingId === p.id
+                            ? "bg-[#F5E8E4] border-[#C4877D] text-[#C4877D]"
+                            : "border-[#E0C0B8] text-[#7A5F5A] hover:border-[#C4877D] hover:text-[#C4877D]"
+                        )}
+                      >
+                        {editingId === p.id ? "Cancel" : "Edit"}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(p.id)}
+                        className="text-[11px] px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
+
+                  {/* ── Edit form (expands inline) ─────── */}
+                  {editingId === p.id && editForm && (
+                    <div className="border-t border-[#E0C0B8] p-3 bg-[#fdfaf9] space-y-3">
+
+                      {/* Category */}
+                      <div>
+                        <label className="text-[10px] font-medium uppercase tracking-widest text-[#7A5F5A] mb-1 block">Category</label>
+                        <select
+                          value={editForm.cat}
+                          onChange={(e) => setEditForm((f) => ({ ...f, cat: e.target.value }))}
+                          className="w-full border border-[#E0C0B8] rounded-lg px-3 py-2 text-[13px] outline-none focus:border-[#C4877D] bg-white"
+                        >
+                          {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+                        </select>
+                      </div>
+
+                      {/* Left + Right */}
+                      {[
+                        { side: "L", label: "Left outfit",  priceKey: "leftPrice",  sizesKey: "leftSizes",  color: "#C4877D" },
+                        { side: "R", label: "Right outfit", priceKey: "rightPrice", sizesKey: "rightSizes", color: "#7BA3C9" },
+                      ].map(({ side, label, priceKey, sizesKey, color }) => (
+                        <div key={side} className="bg-[#F5E8E4] rounded-xl p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 rounded-full" style={{ background: color }} />
+                            <p className="text-[12px] font-medium text-[#1C1412]">{label}</p>
+                          </div>
+                          <label className="text-[10px] text-[#7A5F5A] uppercase tracking-wider mb-1 block">Price (KES)</label>
+                          <input
+                            type="number"
+                            value={editForm[priceKey]}
+                            onChange={(e) => setEditForm((f) => ({ ...f, [priceKey]: e.target.value }))}
+                            className="w-full border border-[#E0C0B8] rounded-lg px-3 py-2 text-[13px] outline-none focus:border-[#C4877D] bg-white mb-2"
+                          />
+                          <label className="text-[10px] text-[#7A5F5A] uppercase tracking-wider mb-1.5 block">Sizes</label>
+                          <div className="flex gap-1.5 flex-wrap">
+                            {SIZES.map((s) => {
+                              const on = editForm[sizesKey].includes(s);
+                              return (
+                                <button key={s} onClick={() => toggleEditSize(side, s)}
+                                  className={"px-2.5 py-1 rounded-lg border text-[11px] font-medium transition-all duration-200 " + (
+                                    on ? "bg-[#1C1412] text-white border-[#1C1412]" : "border-[#E0C0B8] bg-white text-[#7A5F5A] hover:border-[#C4877D]"
+                                  )}>
+                                  {s}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Save button */}
+                      <button
+                        onClick={() => handleSaveEdit(p.id)}
+                        disabled={editLoading}
+                        className="w-full py-2.5 bg-[#1C1412] text-white rounded-xl text-[13px] font-medium disabled:opacity-50 hover:opacity-85 active:scale-[0.98] transition-all duration-200"
+                      >
+                        {editLoading ? "Saving…" : "Save changes"}
+                      </button>
+                    </div>
+                  )}
 
                   {/* Sold-out toggles */}
                   <div className="border-t border-[#F5E8E4] px-3 py-2 flex items-center gap-2 flex-wrap">
@@ -432,13 +515,13 @@ export default function AdminPanel({
                       <button
                         key={key}
                         onClick={() => handleToggleSoldOut(p.id, key, !val)}
-                        className={`text-[11px] px-3 py-1 rounded-full border font-medium transition-all duration-200 ${
+                        className={"text-[11px] px-3 py-1 rounded-full border font-medium transition-all duration-200 " + (
                           val
                             ? "bg-[#1C1412] text-white border-[#1C1412]"
                             : "border-[#E0C0B8] text-[#7A5F5A] hover:border-[#C4877D]"
-                        }`}
+                        )}
                       >
-                        {label} {val ? "✓ Sold" : "Available"}
+                        {label + " " + (val ? "✓ Sold" : "Available")}
                       </button>
                     ))}
                   </div>
