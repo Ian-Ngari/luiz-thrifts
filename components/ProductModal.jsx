@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 
 const SIZES = ["S", "M", "L", "XL", "XXL"];
-const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "25498430650";
+const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "254798430650";
 
 function buildWhatsAppLink(product, side, size) {
   const info = side === "L"

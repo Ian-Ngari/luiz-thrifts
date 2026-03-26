@@ -8,7 +8,7 @@ import ProductModal  from "../components/ProductModal";
 import AdminPanel    from "../components/AdminPanel";
 import Footer        from "../components/Footer";
 
-const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "25498430650";
+const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "254798430650";
 
 function FloatingWhatsApp({ visible }) {
   const msg = encodeURIComponent("Hi! I'd like to ask about your clothing \uD83D\uDE4F");

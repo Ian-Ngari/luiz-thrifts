@@ -6,7 +6,7 @@ export default function Footer() {
         Premium Thrift · Nairobi, Kenya
       </p>
       <a
-        href="https://wa.me/25498430650"
+        href="https://wa.me/254798430650"
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-2 text-[13px] text-[#25D366] font-medium hover:underline"
