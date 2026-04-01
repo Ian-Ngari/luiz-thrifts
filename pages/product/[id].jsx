@@ -148,7 +148,7 @@ export default function ProductDetails() {
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
         <meta name="twitter:image" content={product.front_url} />
-        <link rel="canonical" href={`https://luizmitumbathrifts.com/product/${id}`} />
+        <link rel="canonical" href={`https://luizmitumbathrifts.co.ke/product/${id}`} />
       </Head>
 
       <div className="min-h-screen max-w-lg md:max-w-6xl mx-auto bg-white flex flex-col">
@@ -330,7 +330,7 @@ export default function ProductDetails() {
               Loved this? Share your order!
             </p>
             <a
-              href={`https://wa.me/${WA_NUMBER}?text=Hi%20Luiz%20Mitumba%20Thrifts%2C%20I%20just%20found%20this%20amazing%20${product.cat}!%20%F0%9F%94%A5%0Ahttps%3A%2F%2Fluizmitumbathrifts.com%2Fproduct%2F${id}`}
+              href={`https://wa.me/${WA_NUMBER}?text=Hi%20Luiz%20Mitumba%20Thrifts%2C%20I%20just%20found%20this%20amazing%20${product.cat}!%20%F0%9F%94%A5%0Ahttps%3A%2F%2Fluizmitumbathrifts.co.ke%2Fproduct%2F${id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-white border border-[#25D366] text-[#25D366] hover:bg-[#25D366]/5 transition-colors text-[12px] font-medium"

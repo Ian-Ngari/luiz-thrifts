@@ -120,7 +120,7 @@ export default function CountyDelivery() {
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href={`https://luizmitumbathrifts.com/delivery/${county}`} />
+        <link rel="canonical" href={`https://luizmitumbathrifts.co.ke/delivery/${county}`} />
       </Head>
 
       <div className="min-h-screen max-w-lg md:max-w-6xl mx-auto bg-white flex flex-col">

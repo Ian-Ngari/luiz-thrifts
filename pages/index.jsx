@@ -100,10 +100,10 @@ export default function Home() {
         
         {/* Open Graph / Social Media */}
         <meta property="og:type" content="business.business" />
-        <meta property="og:url" content="https://luizmitumbathrifts.com" />
+        <meta property="og:url" content="https://luizmitumbathrifts.co.ke" />
         <meta property="og:title" content="Luiz Mitumba Thrifts — Premium Thrift Fashion in Nairobi" />
         <meta property="og:description" content="Curated secondhand fashion in Nairobi. Quality thrift finds at accessible prices. Order via WhatsApp. Countrywide delivery." />
-        <meta property="og:image" content="https://luizmitumbathrifts.com/og-image.jpg" />
+        <meta property="og:image" content="https://luizmitumbathrifts.co.ke/og-image.jpg" />
         <meta property="og:site_name" content="Luiz Mitumba Thrifts" />
         <meta property="og:locale" content="en_KE" />
         
@@ -111,7 +111,7 @@ export default function Home() {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Luiz Mitumba Thrifts — Premium Secondhand Clothes" />
         <meta name="twitter:description" content="Shop premium mitumba & thrift clothes in Nairobi. High-quality dresses & fashion at affordable prices. Countrywide delivery." />
-        <meta name="twitter:image" content="https://luizmitumbathrifts.com/og-image.jpg" />
+        <meta name="twitter:image" content="https://luizmitumbathrifts.co.ke/og-image.jpg" />
         
         {/* Geo & Location Meta */}
         <meta name="geo.position" content="-1.2921,36.8219" />
@@ -127,7 +127,7 @@ export default function Home() {
         
         {/* Favicon */}
         <link rel="icon" href="/favicon.ico?v=2" />
-        <link rel="canonical" href="https://luizmitumbathrifts.com" />
+        <link rel="canonical" href="https://luizmitumbathrifts.co.ke" />
         
         {/* Kenya Counties Schema  - for local SEO */}
         <script type="application/ld+json">
@@ -136,10 +136,10 @@ export default function Home() {
             "@type": "LocalBusiness",
             "name": "Luiz Mitumba Thrifts",
             "description": "Premium secondhand and thrift clothing store in Nairobi, Kenya",
-            "image": "https://luizmitumbathrifts.com/og-image.jpg",
-            "url": "https://luizmitumbathrifts.com",
+            "image": "https://luizmitumbathrifts.co.ke/og-image.jpg",
+            "url": "https://luizmitumbathrifts.co.ke",
             "telephone": "+254798430650",
-            "email": "info@luizmitumbathrifts.com",
+            "email": "info@luizmitumbathrifts.co.ke",
             "address": {
               "@type": "PostalAddress",
               "addressLocality": "Nairobi",
@@ -181,7 +181,7 @@ export default function Home() {
             "@type": "OnlineStore",
             "name": "Luiz Mitumba Thrifts",
             "description": "Online thrift and secondhand clothing store",
-            "url": "https://luizmitumbathrifts.com",
+              "url": "https://luizmitumbathrifts.co.ke",
             "offers": {
               "@type": "AggregateOffer",
               "priceCurrency": "KES",
