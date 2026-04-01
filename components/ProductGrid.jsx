@@ -3,7 +3,7 @@ import ProductCard from "./ProductCard";
 export default function ProductGrid({ products, loading, onProductClick }) {
   if (loading) {
     return (
-      <div id="product-grid" className="grid grid-cols-2 gap-2.5 p-3">
+      <div id="product-grid" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 p-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="rounded-xl overflow-hidden border border-[#E0C0B8]">
             <div className="skeleton aspect-[3/4]" />
@@ -28,13 +28,12 @@ export default function ProductGrid({ products, loading, onProductClick }) {
   }
 
   return (
-    <div id="product-grid" className="grid grid-cols-2 gap-2.5 p-3">
+    <div id="product-grid" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 p-3">
       {products.map((product, i) => (
         <ProductCard
           key={product.id}
           product={product}
           index={i}
-          onClick={onProductClick}
         />
       ))}
     </div>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRouter } from "next/router";
 import Image from "next/image";
 
 function isNew(createdAt) {
@@ -7,15 +8,22 @@ function isNew(createdAt) {
   return days <= 7;
 }
 
-export default function ProductCard({ product, onClick, index }) {
+export default function ProductCard({ product, index }) {
+  const router = useRouter();
   const [imgLoaded, setImgLoaded] = useState(false);
 
   const bothSoldOut = product.left_sold_out && product.right_sold_out;
   const newItem     = isNew(product.created_at);
 
+  const handleClick = () => {
+    if (!bothSoldOut) {
+      router.push(`/product/${product.id}`);
+    }
+  };
+
   return (
     <div
-      onClick={() => !bothSoldOut && onClick(product)}
+      onClick={handleClick}
       className={`card-enter rounded-xl overflow-hidden border border-[#E0C0B8] bg-white transition-all duration-300
         ${bothSoldOut
           ? "opacity-60 cursor-not-allowed"

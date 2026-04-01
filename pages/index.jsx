@@ -4,7 +4,6 @@ import Navbar        from "../components/Navbar";
 import Hero          from "../components/Hero";
 import CategoryPills from "../components/CategoryPills";
 import ProductGrid   from "../components/ProductGrid";
-import ProductModal  from "../components/ProductModal";
 import AdminPanel    from "../components/AdminPanel";
 import Footer        from "../components/Footer";
 
@@ -51,7 +50,6 @@ export default function Home() {
   const [products,     setProducts]     = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [category,     setCategory]     = useState("all");
-  const [selectedProd, setSelectedProd] = useState(null);
   const [showAdmin,    setShowAdmin]    = useState(false);
   const [waVisible,    setWaVisible]    = useState(false);
 
@@ -88,41 +86,126 @@ export default function Home() {
 
   function handleProductUpdated(updated) {
     setProducts((prev) => prev.map((p) => p.id === updated.id ? updated : p));
-    if (selectedProd && selectedProd.id === updated.id) setSelectedProd(updated);
   }
 
   return (
     <>
       <Head>
-        <title>Luiz Mitumba Thrifts — Premium Thrift, Nairobi</title>
-        <meta name="description" content="Curated secondhand fashion in Nairobi. Quality thrift finds at accessible prices. Order via WhatsApp." />
+        <title>Luiz Mitumba Thrifts — Premium Secondhand & Thrift Clothes in Nairobi, Kenya</title>
+        <meta name="description" content="Shop premium mitumba & secondhand thrift clothes in Nairobi. High-quality designer dresses, fashion at affordable prices. Countrywide delivery across all 47 Kenya counties. Order via WhatsApp. Women's fashion, men's clothing, vintage styles." />
+        <meta name="keywords" content="mitumba, secondhand clothes, thrift clothes, thrift shop, thrift fashion, mitumba clothes, secondhand dresses, designer thrift, affordable fashion, Nairobi fashion, Kenya thrift store, quality used clothes, vintage fashion, thrift dresses, thrift styles, secondhand fashion, sustainable fashion, eco-friendly clothing" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-        <meta property="og:title" content="Luiz Mitumba Thrifts" />
-        <meta property="og:description" content="Premium thrift fashion in Nairobi." />
+        <meta name="author" content="Luiz Mitumba Thrifts" />
         <meta name="theme-color" content="#F5E8E4" />
+        
+        {/* Open Graph / Social Media */}
+        <meta property="og:type" content="business.business" />
+        <meta property="og:url" content="https://luizmitumbathrifts.com" />
+        <meta property="og:title" content="Luiz Mitumba Thrifts — Premium Thrift Fashion in Nairobi" />
+        <meta property="og:description" content="Curated secondhand fashion in Nairobi. Quality thrift finds at accessible prices. Order via WhatsApp. Countrywide delivery." />
+        <meta property="og:image" content="https://luizmitumbathrifts.com/og-image.jpg" />
+        <meta property="og:site_name" content="Luiz Mitumba Thrifts" />
+        <meta property="og:locale" content="en_KE" />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Luiz Mitumba Thrifts — Premium Secondhand Clothes" />
+        <meta name="twitter:description" content="Shop premium mitumba & thrift clothes in Nairobi. High-quality dresses & fashion at affordable prices. Countrywide delivery." />
+        <meta name="twitter:image" content="https://luizmitumbathrifts.com/og-image.jpg" />
+        
+        {/* Geo & Location Meta */}
+        <meta name="geo.position" content="-1.2921,36.8219" />
+        <meta name="geo.placename" content="Nairobi, Kenya" />
+        <meta name="geo.region" content="KE-KA" />
+        <meta name="ICBM" content="-1.2921, 36.8219" />
+        
+        {/* Additional SEO Meta Tags */}
+        <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+        <meta name="language" content="English" />
+        <meta name="revisit-after" content="7 days" />
+        <meta name="distribution" content="global" />
+        
+        {/* Favicon */}
         <link rel="icon" href="/favicon.ico?v=2" />
+        <link rel="canonical" href="https://luizmitumbathrifts.com" />
+        
+        {/* Kenya Counties Schema  - for local SEO */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            "name": "Luiz Mitumba Thrifts",
+            "description": "Premium secondhand and thrift clothing store in Nairobi, Kenya",
+            "image": "https://luizmitumbathrifts.com/og-image.jpg",
+            "url": "https://luizmitumbathrifts.com",
+            "telephone": "+254798430650",
+            "email": "info@luizmitumbathrifts.com",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Nairobi",
+              "addressRegion": "Nairobi County",
+              "addressCountry": "KE",
+              "areaServed": [
+                "Nairobi County", "Kiambu County", "Kajiado County", "Machakos County", "Makueni County",
+                "Murang'a County", "Nyeri County", "Kirinyaga County", "Embu County", "Tharaka-Nithi County",
+                "Isiolo County", "Meru County", "Samburu County", "Laikipia County", "Nakuru County",
+                "Baringo County", "Elgeyo-Marakwet County", "Nandi County", "Kericho County", "Bomet County",
+                "Kakamega County", "Vihiga County", "Bungoma County", "Busia County", "Siaya County",
+                "Kisumu County", "Homa Bay County", "Migori County", "Kisii County", "Nyamira County",
+                "Turkana County", "West Pokot County", "Kilifi County", "Mombasa County", "Kwale County",
+                "Lamu County", "Taita-Taveta County", "Garissa County", "Wajir County", "Mandera County",
+                "Marsabit County", "Tana River County", "Narok County", "Trans Nzoia County", "Uasin Gishu County",
+                "Kericho County", "Mogotio"
+              ]
+            },
+            "priceRange": "KES 350+",
+            "openingHoursSpecification": {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+              "opens": "08:00",
+              "closes": "22:00"
+            },
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "contactType": "Customer Service",
+              "telephone": "+254798430650",
+              "availableLanguage": ["en", "sw"]
+            }
+          })}
+        </script>
+        
+        {/* E-commerce Schema */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "OnlineStore",
+            "name": "Luiz Mitumba Thrifts",
+            "description": "Online thrift and secondhand clothing store",
+            "url": "https://luizmitumbathrifts.com",
+            "offers": {
+              "@type": "AggregateOffer",
+              "priceCurrency": "KES",
+              "lowPrice": "350",
+              "highPrice": "10000",
+              "offerCount": "120+",
+              "availability": "https://schema.org/InStock"
+            }
+          })}
+        </script>
       </Head>
 
-      <div className="min-h-screen max-w-lg mx-auto bg-white relative">
+      <div className="min-h-screen max-w-lg md:max-w-6xl mx-auto bg-white relative">
         <Navbar onAdminClick={() => setShowAdmin(true)} />
         <Hero />
         <CategoryPills selected={category} onChange={setCategory} />
         <ProductGrid
           products={products}
           loading={loading}
-          onProductClick={setSelectedProd}
         />
         <Footer />
       </div>
 
       <FloatingWhatsApp visible={waVisible} />
-
-      {selectedProd && (
-        <ProductModal
-          product={selectedProd}
-          onClose={() => setSelectedProd(null)}
-        />
-      )}
 
       {showAdmin && (
         <AdminPanel

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import CartButton from "./CartButton";
 
 export default function Navbar({ onAdminClick }) {
   const [scrolled, setScrolled] = useState(false);
@@ -39,12 +40,15 @@ export default function Navbar({ onAdminClick }) {
           </div>
         </div>
 
-        <button
-          onClick={onAdminClick}
-          className="text-[11px] font-medium px-3 py-1.5 border border-[#E0C0B8] rounded-lg text-[#7A5F5A] hover:bg-[#F5E8E4] hover:border-[#C4877D] transition-all duration-200 active:scale-95"
-        >
-          Admin ›
-        </button>
+        <div className="flex items-center gap-2">
+          <CartButton />
+          <button
+            onClick={onAdminClick}
+            className="text-[11px] font-medium px-3 py-1.5 border border-[#E0C0B8] rounded-lg text-[#7A5F5A] hover:bg-[#F5E8E4] hover:border-[#C4877D] transition-all duration-200 active:scale-95"
+          >
+            Admin ›
+          </button>
+        </div>
       </div>
     </nav>
   );
