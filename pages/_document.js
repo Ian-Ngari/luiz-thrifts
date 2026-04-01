@@ -5,7 +5,7 @@ export default function Document() {
     <Html lang="en">
       <Head>
         {/* Google Search Console Verification */}
-        <meta name="google-site-verification" content="googlef8e1604d74d906d1" />
+        <meta name="google-site-verification" content="0Djaxhup4Bx-Vj-YtVoSTPJVBrH-jZsBGLAWbW4eUUQ" />
         
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
