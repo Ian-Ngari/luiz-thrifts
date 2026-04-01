@@ -74,15 +74,20 @@ export default async function handler(req, res) {
       .select("id, created_at")
       .order("created_at", { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error:", error);
+      throw error;
+    }
 
     const sitemap = generateSiteMap(products || []);
 
     res.setHeader("Content-Type", "application/xml; charset=utf-8");
+    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
+    res.setHeader("X-Content-Type-Options", "nosniff");
     res.write(sitemap);
     res.end();
   } catch (error) {
     console.error("Sitemap error:", error);
-    res.status(500).end("Error generating sitemap");
+    res.status(500).json({ error: "Error generating sitemap", details: error.message });
   }
 }
